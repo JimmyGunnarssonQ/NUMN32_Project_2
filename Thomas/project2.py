@@ -4,6 +4,22 @@ import scipy.optimize as opt
 import matplotlib.pyplot as plt
 
 
+def RMSnorm(vec):
+    """Returns the Root Mean Square norm of the vector vec.
+    The RMS-norm is defined as:
+    $$ \sqrt{ 1/(N+1) \cdot \sum_{k=0}^N vec_k^2} $$
+    Args:
+        vec (array-like): A vector.
+
+    Returns:
+        _type_: _description_
+    """
+    ret = 0
+    for x in vec:
+        ret += x**2
+    ret /= len(vec)
+    return np.sqrt(ret)
+
 def getSmallesEigenPairs(A, n):
     """Finds the n smallest eigenvalues of A and their accompanying eigenvector.
 
@@ -94,7 +110,7 @@ def sortEigenPairs(list_to_sort):
         return new_vec
 
 
-class BVP:  # Problem class
+class BVP:
     """A class for Boundary Value Problems
     """
     def __init__(self, alpha, beta, L):
@@ -110,7 +126,7 @@ class BVP:  # Problem class
         self.L = L
 
 
-class BVP_solver:  # Solver class
+class BVP_solver:
     """A class for solvers of Boundary Value Problems.
     """
     def __init__(self, N):
@@ -125,8 +141,22 @@ class BVP_solver:  # Solver class
         pass
 
 
-class doubleDirichlet(BVP_solver):  # Subclass to Solver
+class doubleDirichlet(BVP_solver):
+    """A solver for Boundary Value Problems with Dirichlet conditions at both alpha and beta.
+
+    Args:
+        BVP_solver (class): Implements the BVP_solver class.
+    """
     def solve(self, problem, fvec):
+        """Solves the BVP and returns the solution.
+
+        Args:
+            problem (BVP): The problem to be solved
+            fvec (ndarray): f evaluated at N interior points.
+
+        Returns:
+            [float]: The solution y.
+        """
         h_squared = (problem.L/(self.N+1))**2
         v = np.zeros(self.N)
         v[0] = -2/h_squared
@@ -139,9 +169,22 @@ class doubleDirichlet(BVP_solver):  # Subclass to Solver
         return [problem.alpha] + sol.tolist() + [problem.beta]
 
 
-class dirichletNeumann(BVP_solver):  # Subclass to Solver
-    # Written with 'Approach 1". Might redo.
+class dirichletNeumann(BVP_solver):
+    """A solver for Boundary Value Problems with Dirichlet condition at both alpha and Neumann condition at beta.
+
+    Args:
+        BVP_solver (class): Implements the BVP_solver class.
+    """
     def solve(self, problem, fvec):
+        """Solves the BVP and returns the solution.
+
+        Args:
+            problem (BVP): The problem to be solved
+            fvec (ndarray): f evaluated at N interior points.
+
+        Returns:
+            [float]: The solution y.
+        """
         h_squared = (problem.L/(self.N))**2
         A = (-2/h_squared)*np.eye(self.N) + (1/h_squared)*np.eye(self.N, k=1) + (1/h_squared)*np.eye(self.N, k=-1)
         A[-1, -2] += 1/h_squared
@@ -152,8 +195,25 @@ class dirichletNeumann(BVP_solver):  # Subclass to Solver
         return [problem.alpha] + sol.tolist() + [sol[-1]+problem.beta]
 
 
-class SturmLiou_DoubleDirichlet(BVP_solver):  # Subclass to Solver
+class SturmLiou_DoubleDirichlet(BVP_solver):
+    """A solver for Sturm-Liouville eigenvalue problems with Dirichlet conditions at both alpha and beta. The standard formulation of a S-L eigenvalue problem is
+    $$ \frac{d}{dx} \left( p(x) \frac{dy}{dx}\right) - q(x)y = \lambda y.$$
+
+    Args:
+        BVP_solver (class): Implements the BVP_solver class.
+    """
     def solve(self, problem, number_of_modes, p=None, q=lambda x: 0):
+        """Solves the eigenvalue problem and returns a number of eigenvalues and eigenmodes.
+
+        Args:
+            problem (BVP): The problem to be solved
+            number_of_modes (int): The number of eigenvalues and eigenmodes to solve for.
+            p (callable, optional): The function p(x). Must be positive on [0,L]. Defaults to 1.
+            q (callable, optional): The function q(x). Must be non-negative on [0,L]. Defaults to 0.
+
+        Returns:
+            ([float], [[float]]): A list of eigenvalues, and a list of eigenmodes, each being a list of evaluations of y.
+        """
         if p is None:
             h = problem.L/(self.N+1)
             h_squared = (problem.L/(self.N+1))**2
@@ -190,9 +250,22 @@ class SturmLiou_DoubleDirichlet(BVP_solver):  # Subclass to Solver
         return [ep[0] for ep in eigenpairs], eigenmodes
 
 
-class SturmLiou_DirichletNeumann(BVP_solver):  # Subclass to Solver
-    # Written with 'Approach 1". Might redo.
+class SturmLiou_DirichletNeumann(BVP_solver):
+    """A solver for Sturm-Liouville eigenvalue problems with Dirichlet condition at alpha and Neumann condition at beta.
+
+    Args:
+        BVP_solver (class): Implements the BVP_solver class.
+    """
     def solve(self, problem, number_of_modes):
+        """Solves the eigenvalue problem and returns a number of eigenvalues and eigenmodes.
+
+        Args:
+            problem (BVP): The problem to be solved
+            number_of_modes (int): The number of eigenvalues and eigenmodes to solve for.
+
+        Returns:
+            ([float], [[float]]): A list of eigenvalues, and a list of eigenmodes, each being a list of evaluations of y.
+        """
         h_squared = (problem.L/(self.N))**2
         A = (-2)*np.eye(self.N) + np.eye(self.N, k=1) + np.eye(self.N, k=-1)
         A[-1, -2] += 1
@@ -218,7 +291,6 @@ if __name__ == "__main__":
         problem = BVP(alpha=0, beta=1/2, L=L)
         solver = doubleDirichlet(N)
         numerical_solution = solver.solve(problem=problem, fvec=np.ones(N))
-
         x_list = np.linspace(0, L, N+2)
         actual_solution = [(x**2)/2 for x in x_list]
 
@@ -239,13 +311,6 @@ if __name__ == "__main__":
         plt.legend()
         plt.show()
 
-
-    def RMSnorm(vec, h):
-        ret = 0
-        for x in vec:
-            ret += x**2*h
-        return np.sqrt(ret)
-
     def doTask1point1_2():
         N_list = []
         error_list = []
@@ -255,12 +320,10 @@ if __name__ == "__main__":
             problem = BVP(alpha=1, beta=np.exp(-L), L=L)
             solver = doubleDirichlet(N)
             x_list = np.linspace(0, L, N+2)
-
             numerical_solution = solver.solve(problem=problem, fvec=[np.exp(-x) for x in x_list[1:-1]])
             actual_solution = [np.exp(-x) for x in x_list]
-
             error = np.array(numerical_solution[:-1])-np.array(actual_solution[:-1])
-            error_list.append(RMSnorm(error, L/(N+1)))
+            error_list.append(RMSnorm(error))
 
         plt.loglog(N_list, error_list, '.', label="$||e||_{RMS}$")
         coeff = opt.curve_fit(lambda x,c: c*(1/x)**2, N_list , error_list)[0][0]
@@ -282,13 +345,10 @@ if __name__ == "__main__":
 
         problem = BVP(0, 0, Length)
         solver = doubleDirichlet(N)
-
         fvec1 = -50000*np.ones(N)
         Moment = solver.solve(problem, fvec1)
-
         x_list = np.linspace(0, Length, N+2)
         fvec2 = [Moment[i]/(Elasticity * Inertia(x_list[i])) for i in range(1, N+1)]
-
         u = solver.solve(problem, fvec2)
 
         print(f"Mid-point value: {u[len(u)//2]}")
@@ -367,16 +427,13 @@ if __name__ == "__main__":
 
         x_list = np.linspace(0, 1, N+2)
         for k in range(len(titles)):
-
             plot_title = titles[k]
             y_label = y_labels[k]
             plot_func = plot_funcs[k]
-
             plt.figure(figsize=(10, 6))
             for i in range(len(num_eigmodes)):
                 y = num_eigmodes[i]
                 plt.plot(x_list, plot_func(y, num_eigvals[i]), label=f"Eigenmode {i+1}")
-
             plt.title(plot_title)
             plt.xlabel("Position, $1/L$")
             plt.ylabel(y_label)
@@ -385,22 +442,99 @@ if __name__ == "__main__":
             plt.subplots_adjust(right=0.8)
             plt.show()
 
-    def doTask2point1():
-        do_2point1_error_compare(m=3, maxN=100)
-        do_2point1_graph(3)
-
-    def doTask2point2():
-        # Schrödinger V=0
-        shroed(p=lambda y: -1/2, V=lambda y: 0)
-
-        # Schrödinger V=ex1
-        shroed(p=lambda y: -1/2, V=lambda x: 700*(0.5 - np.abs(x-0.5)), Vformula="$V(x)=700(0.5 - |x-0.5|)$")
-
-        # Schrödinger V=ex2
-        shroed(p=lambda y: -1/2, V=lambda x: 800*(np.sin(np.pi*x)**2), Vformula="$V(x)=800 sin^2 \\pi x$")
-
-    # doTask1point1()
-    doTask1point1_2()
-    # doTask1point2()
-    # doTask2point1()
-    # doTask2point2()
+    print("\nDo Task 1.1?")
+    while True:
+        flag = input("(Yes/No): ")
+        flag = flag.lower()
+        if flag == "y":
+            print("\nf=1?")
+            while True:
+                flag = input("(Yes/No): ")
+                flag = flag.lower()
+                if flag == "y":
+                    doTask1point1()
+                    break
+                elif flag == "n":
+                    break
+            print("\nf=e^{-x}?")
+            while True:
+                flag = input("(Yes/No): ")
+                flag = flag.lower()
+                if flag == "y":
+                    doTask1point1_2()
+                    break
+                elif flag == "n":
+                    break
+            break
+        elif flag == "n":
+            break
+    print("\nDo Task 1.2?")
+    while True:
+        flag = input("(Yes/No): ")
+        flag = flag.lower()
+        if flag == "y":
+            doTask1point2()
+            break
+        elif flag == "n":
+            break
+    print("\nDo Task 2.1?")
+    while True:
+        flag = input("(Yes/No): ")
+        flag = flag.lower()
+        if flag == "y":
+            print("\nCompare the errors?")
+            while True:
+                flag = input("(Yes/No): ")
+                flag = flag.lower()
+                if flag == "y":
+                    do_2point1_error_compare(m=3, maxN=100)
+                    break
+                elif flag == "n":
+                    break
+            print("\nPlot the eigenmodes?")
+            while True:
+                flag = input("(Yes/No): ")
+                flag = flag.lower()
+                if flag == "y":
+                    do_2point1_graph(3)
+                    break
+                elif flag == "n":
+                    break
+            break
+        elif flag == "n":
+            break
+    print("\nDo Task 2.2?")
+    while True:
+        flag = input("(Yes/No): ")
+        flag = flag.lower()
+        if flag == "y":
+            print("\nDo V(x)=0?")
+            while True:
+                flag = input("(Yes/No): ")
+                flag = flag.lower()
+                if flag == "y":
+                    shroed(p=lambda y: -1/2, V=lambda y: 0)
+                    break
+                elif flag == "n":
+                    break
+            print("\nDo V(x)=700(0.5 - |x-0.5|)?")
+            while True:
+                flag = input("(Yes/No): ")
+                flag = flag.lower()
+                if flag == "y":
+                    shroed(p=lambda y: -1/2, V=lambda x: 700*(0.5 - np.abs(x-0.5)), Vformula="$V(x)=700(0.5 - |x-0.5|)$")
+                    break
+                elif flag == "n":
+                    break
+            print("\nDo V(x)=800 sin^2 (pi*x)?")
+            while True:
+                flag = input("(Yes/No): ")
+                flag = flag.lower()
+                if flag == "y":
+                    shroed(p=lambda y: -1/2, V=lambda x: 800*(np.sin(np.pi*x)**2), Vformula="$V(x)=800 sin^2 \\pi x$")
+                    break
+                elif flag == "n":
+                    break
+            break
+        elif flag == "n":
+            break
