@@ -20,6 +20,7 @@ def RMSnorm(vec):
     ret /= len(vec)
     return np.sqrt(ret)
 
+
 def getSmallesEigenPairs(A, n):
     """Finds the n smallest eigenvalues of A and their accompanying eigenvector.
 
@@ -75,7 +76,8 @@ def smallest(list_to_sort, n):
 
 
 def sortEigenPairs(list_to_sort):
-    """A divide and conquer sorter that recursively sorts a list according to the smallest absolute value of the first sub-element.
+    """A divide and conquer sorter that recursively sorts a list
+    according to the smallest absolute value of the first sub-element.
 
     Args:
         list_to_sort ([float, ...]): List containing other lists where the first element is float.
@@ -196,13 +198,14 @@ class dirichletNeumann(BVP_solver):
 
 
 class SturmLiou_DoubleDirichlet(BVP_solver):
-    """A solver for Sturm-Liouville eigenvalue problems with Dirichlet conditions at both alpha and beta. The standard formulation of a S-L eigenvalue problem is
-    $$ \frac{d}{dx} \left( p(x) \frac{dy}{dx}\right) - q(x)y = \lambda y.$$
+    """A solver for Sturm-Liouville eigenvalue problems with Dirichlet conditions at both alpha and beta.
+    The standard formulation of a S-L eigenvalue problem is
+    $$ \\frac{d}{dx} \\left( p(x) \\frac{dy}{dx}\\right) - q(x)y = \\lambda y.$$
 
     Args:
         BVP_solver (class): Implements the BVP_solver class.
     """
-    def solve(self, problem, number_of_modes, p=None, q=lambda x: 0):
+    def solve(self, problem, number_of_modes, p=None, q=None):
         """Solves the eigenvalue problem and returns a number of eigenvalues and eigenmodes.
 
         Args:
@@ -212,9 +215,9 @@ class SturmLiou_DoubleDirichlet(BVP_solver):
             q (callable, optional): The function q(x). Must be non-negative on [0,L]. Defaults to 0.
 
         Returns:
-            ([float], [[float]]): A list of eigenvalues, and a list of eigenmodes, each being a list of evaluations of y.
+            ([float], [[float]]): A list of eigenvalues, and a list of eigenmodes, being lists of evaluations of y.
         """
-        if p is None:
+        if p is None and q is None:
             h = problem.L/(self.N+1)
             h_squared = (problem.L/(self.N+1))**2
             v = np.zeros(self.N)
@@ -223,6 +226,10 @@ class SturmLiou_DoubleDirichlet(BVP_solver):
             A = lin.toeplitz(v)
 
         else:
+            if p is None:
+                p = lambda x: 1
+            elif q is None:
+                q = lambda x: 0
             h = problem.L/(self.N+1)
             h_squared = h**2
             A = np.zeros((self.N, self.N))
@@ -264,7 +271,7 @@ class SturmLiou_DirichletNeumann(BVP_solver):
             number_of_modes (int): The number of eigenvalues and eigenmodes to solve for.
 
         Returns:
-            ([float], [[float]]): A list of eigenvalues, and a list of eigenmodes, each being a list of evaluations of y.
+            ([float], [[float]]): A list of eigenvalues, and a list of eigenmodes, being lists of evaluations of y.
         """
         h_squared = (problem.L/(self.N))**2
         A = (-2)*np.eye(self.N) + np.eye(self.N, k=1) + np.eye(self.N, k=-1)
@@ -314,7 +321,7 @@ if __name__ == "__main__":
     def doTask1point1_2():
         N_list = []
         error_list = []
-        for N in range(10,499):
+        for N in range(10, 499):
             N_list.append(N)
             L = 1
             problem = BVP(alpha=1, beta=np.exp(-L), L=L)
@@ -326,7 +333,7 @@ if __name__ == "__main__":
             error_list.append(RMSnorm(error))
 
         plt.loglog(N_list, error_list, '.', label="$||e||_{RMS}$")
-        coeff = opt.curve_fit(lambda x,c: c*(1/x)**2, N_list , error_list)[0][0]
+        coeff = opt.curve_fit(lambda x, c: c*(1/x)**2, N_list, error_list)[0][0]
         plt.loglog(N_list, [coeff*(1/N)**2 for N in N_list], label=f"${coeff}(1/N)^2$")
         plt.title("The RMS-norm of the error of the approximation to $f(x)=e^{-x}$")
         plt.xlabel("Number of inner points, $N$")
@@ -342,7 +349,6 @@ if __name__ == "__main__":
 
         def Inertia(x):
             return 10**(-3) * (3-2*np.cos((np.pi*x)/Length)**12)
-
         problem = BVP(0, 0, Length)
         solver = doubleDirichlet(N)
         fvec1 = -50000*np.ones(N)
@@ -522,7 +528,8 @@ if __name__ == "__main__":
                 flag = input("(Yes/No): ")
                 flag = flag.lower()
                 if flag == "y":
-                    shroed(p=lambda y: -1/2, V=lambda x: 700*(0.5 - np.abs(x-0.5)), Vformula="$V(x)=700(0.5 - |x-0.5|)$")
+                    shroed(p=lambda y: -1/2, V=lambda x: 700*(0.5 - np.abs(x-0.5)),
+                           Vformula="$V(x)=700(0.5 - |x-0.5|)$")
                     break
                 elif flag == "n":
                     break
@@ -531,7 +538,8 @@ if __name__ == "__main__":
                 flag = input("(Yes/No): ")
                 flag = flag.lower()
                 if flag == "y":
-                    shroed(p=lambda y: -1/2, V=lambda x: 800*(np.sin(np.pi*x)**2), Vformula="$V(x)=800 sin^2 \\pi x$")
+                    shroed(p=lambda y: -1/2, V=lambda x: 800*(np.sin(np.pi*x)**2),
+                           Vformula="$V(x)=800 sin^2 \\pi x$")
                     break
                 elif flag == "n":
                     break
