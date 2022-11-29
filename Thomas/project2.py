@@ -292,9 +292,7 @@ class SturmLiou_DirichletNeumann(BVP_solver):
 
 
 if __name__ == "__main__":
-    def doTask1point1():
-        N = 999
-        L = 1
+    def doTask1point1(N, L):
         problem = BVP(alpha=0, beta=1/2, L=L)
         solver = doubleDirichlet(N)
         numerical_solution = solver.solve(problem=problem, fvec=np.ones(N))
@@ -318,10 +316,10 @@ if __name__ == "__main__":
         plt.legend()
         plt.show()
 
-    def doTask1point1_2():
+    def doTask1point1_2(N_range):
         N_list = []
         error_list = []
-        for N in range(10, 499):
+        for N in range(N_range[0], N_range[1]):
             N_list.append(N)
             L = 1
             problem = BVP(alpha=1, beta=np.exp(-L), L=L)
@@ -342,9 +340,7 @@ if __name__ == "__main__":
         plt.legend()
         plt.show()
 
-    def doTask1point2():
-        N = 999
-        Length = 10
+    def doTask1point2(N=999, Length=10):
         Elasticity = 1.9 * 10**11
 
         def Inertia(x):
@@ -390,8 +386,7 @@ if __name__ == "__main__":
         plt.subplots_adjust(right=0.8)
         plt.show()
 
-    def do_2point1_graph(k):
-        N = 499
+    def do_2point1_graph(k, N):
         problem = BVP(0, 0, 1)
         solver = SturmLiou_DirichletNeumann(N)
         num_eigvals, num_eigmodes = solver.solve(problem, k)
@@ -409,8 +404,7 @@ if __name__ == "__main__":
         plt.subplots_adjust(right=0.8)
         plt.show()
 
-    def shroed(V=None, p=lambda x: 1, Vformula="$V(x)=1$"):
-        N = 200
+    def shroed(V=None, p=lambda x: 1, Vformula="$V(x)=1$", N=200):
         problem = BVP(0, 0, 1)
         solver = SturmLiou_DoubleDirichlet(N)
         num_eigvals, num_eigmodes = solver.solve(problem, 10, p=p, q=V)
@@ -458,7 +452,7 @@ if __name__ == "__main__":
                 flag = input("(Yes/No): ")
                 flag = flag.lower()
                 if flag == "y":
-                    doTask1point1()
+                    doTask1point1(N=999, L=1)
                     break
                 elif flag == "n":
                     break
@@ -467,7 +461,7 @@ if __name__ == "__main__":
                 flag = input("(Yes/No): ")
                 flag = flag.lower()
                 if flag == "y":
-                    doTask1point1_2()
+                    doTask1point1_2(N_range=(10, 499))
                     break
                 elif flag == "n":
                     break
@@ -502,7 +496,7 @@ if __name__ == "__main__":
                 flag = input("(Yes/No): ")
                 flag = flag.lower()
                 if flag == "y":
-                    do_2point1_graph(3)
+                    do_2point1_graph(k=3, N=499)
                     break
                 elif flag == "n":
                     break
